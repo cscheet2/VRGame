@@ -1,8 +1,8 @@
 using UnityEngine;
 
 /**
- * Script used for finding the edge and tip of the blade
- * so we don't need to eyeball it
+ * Auto-setup blade tip and base
+ * Works for any sword orientation
  */
 public class BladeAutoSetup : MonoBehaviour
 {
@@ -17,7 +17,11 @@ public class BladeAutoSetup : MonoBehaviour
     void AutoPlaceBladePoints()
     {
         MeshFilter mf = GetComponentInChildren<MeshFilter>();
-        if (mf == null) return;
+        if (mf == null)
+        {
+            Debug.LogWarning("No MeshFilter found for BladeAutoSetup");
+            return;
+        }
 
         Mesh mesh = mf.sharedMesh;
         Bounds bounds = mesh.bounds;
@@ -36,8 +40,25 @@ public class BladeAutoSetup : MonoBehaviour
             bladeTip.parent = mf.transform;
         }
 
-        // Assuming blade points along local Y axis
-        bladeBase.localPosition = new Vector3(0, bounds.min.y, 0);
-        bladeTip.localPosition = new Vector3(0, bounds.max.y, 0);
+        // Compute blade direction in local space
+        Vector3 localDir = Vector3.up; // default direction along Y
+        if (bounds.size.y > bounds.size.x && bounds.size.y > bounds.size.z)
+            localDir = Vector3.up;    // tall along Y
+        else if (bounds.size.z > bounds.size.x)
+            localDir = Vector3.forward;
+        else
+            localDir = Vector3.right;
+
+        // Place base and tip at ends along the longest axis
+        bladeBase.localPosition = bounds.center - localDir * bounds.extents[GetLongestAxis(bounds)];
+        bladeTip.localPosition = bounds.center + localDir * bounds.extents[GetLongestAxis(bounds)];
+    }
+
+    int GetLongestAxis(Bounds b)
+    {
+        Vector3 size = b.size;
+        if (size.x >= size.y && size.x >= size.z) return 0;
+        if (size.y >= size.x && size.y >= size.z) return 1;
+        return 2;
     }
 }

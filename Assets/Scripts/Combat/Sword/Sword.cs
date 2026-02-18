@@ -10,7 +10,7 @@ public class Sword : MonoBehaviour
 
     [Header("Detection")]
     public float sphereRadius = 0.025f;
-    public LayerMask parryLayer;
+    public LayerMask meleeParryLayer;   // Only melee objects
     public float hitCooldown = 0.2f;
 
     [Header("Swing")]
@@ -59,12 +59,27 @@ public class Sword : MonoBehaviour
 
     void FixedUpdate()
     {
-        SweepBlade();
+        SweepBladeMelee();
+        SweepBladeBullets();
+
         lastBasePos = bladeBase.position;
         lastTipPos = bladeTip.position;
+
+        BulletManager.Instance.TryParryBullets(
+            lastBasePos,
+            lastTipPos,
+            bladeBase.position,
+            bladeTip.position,
+            sphereRadius,
+            Velocity,
+            Time.time - swingStartTime <= perfectWindow
+        );
     }
 
-    void SweepBlade()
+    // -------------------------
+    // MELEE (Physics-Based)
+    // -------------------------
+    void SweepBladeMelee()
     {
         for (int i = 0; i <= 4; i++)
         {
@@ -82,7 +97,7 @@ public class Sword : MonoBehaviour
                 sphereRadius,
                 movement.normalized,
                 distance,
-                parryLayer,
+                meleeParryLayer,
                 QueryTriggerInteraction.Ignore
             );
 
@@ -90,22 +105,13 @@ public class Sword : MonoBehaviour
             {
                 Rigidbody rb = hit.rigidbody;
                 if (rb == null) continue;
-
                 if (!CanHit(rb)) continue;
+
                 cooldowns[rb] = Time.time;
 
-                IParryableAttack attack = rb.GetComponent<IParryableAttack>();
-                if (attack == null) continue;
-                if (!attack.CanBeParried()) continue;
-
-                ParryContext context = new ParryContext
-                {
-                    isPerfect = Time.time - swingStartTime <= perfectWindow,
-                    swordVelocity = Velocity,
-                    hitNormal = hit.normal
-                };
-
-                attack.OnParried(context);
+                // Simple example: reflect rigidbody
+                Vector3 reflectDir = Vector3.Reflect(rb.velocity, hit.normal);
+                rb.velocity = reflectDir;
 
                 StartCoroutine(HitStop());
             }
@@ -114,19 +120,44 @@ public class Sword : MonoBehaviour
 
     bool CanHit(Rigidbody rb)
     {
-        if (cooldowns.ContainsKey(rb))
+        if (cooldowns.TryGetValue(rb, out float lastHitTime))
         {
-            if (Time.time - cooldowns[rb] < hitCooldown)
+            if (Time.time - lastHitTime < hitCooldown)
                 return false;
         }
         return true;
     }
 
+    // -------------------------
+    // BULLETS (Struct-Based)
+    // -------------------------
+    void SweepBladeBullets()
+    {
+        if (!isSwinging) return;
+
+        bool isPerfect = Time.time - swingStartTime <= perfectWindow;
+
+        BulletManager.Instance.TryParryBullets(
+            lastBasePos,
+            lastTipPos,
+            bladeBase.position,
+            bladeTip.position,
+            sphereRadius,
+            Velocity,
+            isPerfect
+        );
+    }
+
+    // -------------------------
+    // HIT STOP
+    // -------------------------
     IEnumerator HitStop()
     {
         float original = Time.timeScale;
         Time.timeScale = hitStopScale;
+
         yield return new WaitForSecondsRealtime(hitStopDuration);
+
         Time.timeScale = original;
     }
 }
