@@ -4,13 +4,13 @@ using System.Collections.Generic;
 
 public class Sword : MonoBehaviour
 {
-    [Header("Blade Points")]
+    [Header("Blade Points (Used For Melee Only)")]
     public Transform bladeBase;
     public Transform bladeTip;
 
-    [Header("Detection")]
+    [Header("Melee Detection")]
     public float sphereRadius = 0.025f;
-    public LayerMask meleeParryLayer;   // Only melee objects
+    public LayerMask meleeParryLayer;
     public float hitCooldown = 0.2f;
 
     [Header("Swing")]
@@ -18,26 +18,53 @@ public class Sword : MonoBehaviour
     public float swingStopThreshold = 0.4f;
     public float perfectWindow = 0.15f;
 
+    [Header("Bullet Parry")]
+    public float parryAngle = 70f;
+    public float speedMultiplier = 1.5f;
+
     [Header("Hit Stop")]
     public float hitStopDuration = 0.05f;
     public float hitStopScale = 0.85f;
 
     public Vector3 Velocity { get; private set; }
 
-    Vector3 lastSwordPos;
-    Vector3 lastBasePos;
-    Vector3 lastTipPos;
+    private Vector3 lastSwordPos;
+    private Vector3 lastBasePos;
+    private Vector3 lastTipPos;
 
-    float swingStartTime;
-    bool isSwinging;
+    private float swingStartTime;
+    private bool isSwinging;
 
-    Dictionary<Rigidbody, float> cooldowns = new Dictionary<Rigidbody, float>();
+    private Renderer swordRenderer;
+    private Vector3 halfExtents;
+    private float boundingSphereRadius;
+
+    private Dictionary<Rigidbody, float> cooldowns = new Dictionary<Rigidbody, float>();
+
+    void Awake()
+    {
+        // Try to find any MeshRenderer in children (recursive)
+        swordRenderer = GetComponentInChildren<Renderer>(true);
+
+        if (swordRenderer == null)
+        {
+            Debug.LogError($"[Sword] No MeshRenderer found in children of {gameObject.name}!");
+        }
+    }
 
     void Start()
     {
         lastSwordPos = transform.position;
-        lastBasePos = bladeBase.position;
-        lastTipPos = bladeTip.position;
+
+        if (bladeBase != null) lastBasePos = bladeBase.position;
+        if (bladeTip != null) lastTipPos = bladeTip.position;
+
+        if (swordRenderer != null)
+        {
+            Bounds b = swordRenderer.bounds;
+            halfExtents = b.extents;
+            boundingSphereRadius = halfExtents.magnitude;
+        }
     }
 
     void Update()
@@ -60,27 +87,22 @@ public class Sword : MonoBehaviour
     void FixedUpdate()
     {
         SweepBladeMelee();
-        SweepBladeBullets();
 
-        lastBasePos = bladeBase.position;
-        lastTipPos = bladeTip.position;
+        if (isSwinging)
+            ParryBullets();
 
-        BulletManager.Instance.TryParryBullets(
-            lastBasePos,
-            lastTipPos,
-            bladeBase.position,
-            bladeTip.position,
-            sphereRadius,
-            Velocity,
-            Time.time - swingStartTime <= perfectWindow
-        );
+        if (bladeBase != null) lastBasePos = bladeBase.position;
+        if (bladeTip != null) lastTipPos = bladeTip.position;
     }
 
-    // -------------------------
+    // =========================================================
     // MELEE (Physics-Based)
-    // -------------------------
+    // =========================================================
+
     void SweepBladeMelee()
     {
+        if (bladeBase == null || bladeTip == null) return;
+
         for (int i = 0; i <= 4; i++)
         {
             float t = i / 4f;
@@ -109,7 +131,6 @@ public class Sword : MonoBehaviour
 
                 cooldowns[rb] = Time.time;
 
-                // Simple example: reflect rigidbody
                 Vector3 reflectDir = Vector3.Reflect(rb.velocity, hit.normal);
                 rb.velocity = reflectDir;
 
@@ -128,29 +149,35 @@ public class Sword : MonoBehaviour
         return true;
     }
 
-    // -------------------------
-    // BULLETS (Struct-Based)
-    // -------------------------
-    void SweepBladeBullets()
+    // =========================================================
+    // BULLETS (Optimized Spatial Grid + OBB)
+    // =========================================================
+
+    void ParryBullets()
     {
-        if (!isSwinging) return;
+        if (BulletManager.Instance == null) return;
+        if (swordRenderer == null) return;
+        if (Velocity.sqrMagnitude < 0.0001f) return;
 
         bool isPerfect = Time.time - swingStartTime <= perfectWindow;
 
+        Vector3 swordCenter = swordRenderer.bounds.center;
+
         BulletManager.Instance.TryParryBullets(
-            lastBasePos,
-            lastTipPos,
-            bladeBase.position,
-            bladeTip.position,
-            sphereRadius,
+            swordCenter,
+            transform,
+            halfExtents,
+            boundingSphereRadius,
             Velocity,
-            isPerfect
+            isPerfect ? parryAngle : parryAngle * 0.7f,
+            speedMultiplier
         );
     }
 
-    // -------------------------
+    // =========================================================
     // HIT STOP
-    // -------------------------
+    // =========================================================
+
     IEnumerator HitStop()
     {
         float original = Time.timeScale;

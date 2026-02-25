@@ -3,47 +3,82 @@ using UnityEngine;
 
 public class SampleEnemy : MonoBehaviour
 {
+    [Header("References")]
     public Transform fireOrigin;
-    public Transform player;
+    public Transform player; // optional, only needed for targeted attacks
 
-    private List<SampleAttackPhase> phases = new List<SampleAttackPhase>();
-    private SampleAttackPhase currentPhase;
-    private int currentPhaseIndex = 0;
+    [Header("AttackData Assets")]
+    public AttackData radialAttackData;
+    public AttackData spiralAttackData;
+    public AttackData targetedAttackData;
+
+    private List<AttackState> attackStates = new List<AttackState>();
+    private int currentIndex = 0;
+    private AttackState currentState;
 
     void Start()
     {
-        SetupPhases();
-        StartPhase(0);
+        SetupAttackStates();
+        StartState(0);
     }
 
     void Update()
     {
-        if (currentPhase == null) return;
+        if (currentState == null) return;
 
-        currentPhase.UpdatePhase(Time.deltaTime);
+        currentState.Tick(Time.deltaTime);
 
-        if (currentPhase.IsFinished())
-            NextPhase();
+        // Move to next state if finished
+        if (currentState.attack.behaviorInstance != null && currentState.attack.behaviorInstance.IsFinished)
+        {
+            NextState();
+        }
     }
 
-    void SetupPhases()
+    void SetupAttackStates()
     {
-        phases.Add(new SampleRadialBulletPhase(fireOrigin, 5f, 1f, 12, 8f));
-        phases.Add(new SampleSpiralPhase(fireOrigin, 6f, 0.1f));
-        phases.Add(new SampleTargetedBurstPhase(fireOrigin, player, 4f, 0.3f, 5, 12f));
+        attackStates.Clear();
+
+        // Radial attack
+        if (radialAttackData != null)
+        {
+            radialAttackData.InitializeBehavior();
+            attackStates.Add(new AttackState { attack = radialAttackData });
+        }
+
+        // Spiral attack
+        if (spiralAttackData != null)
+        {
+            spiralAttackData.InitializeBehavior();
+            attackStates.Add(new AttackState { attack = spiralAttackData });
+        }
+
+        // Targeted attack
+        if (targetedAttackData != null)
+        {
+            targetedAttackData.InitializeBehavior();
+
+            // Assign player as target if the behavior supports it
+            if (targetedAttackData.behaviorInstance is IAttackTarget targetable)
+            {
+                targetable.SetTarget(player);
+            }
+
+            attackStates.Add(new AttackState { attack = targetedAttackData });
+        }
     }
 
-    void StartPhase(int index)
+    void StartState(int index)
     {
-        currentPhaseIndex = index;
-        currentPhase = phases[index];
-        currentPhase.Enter();
+        currentIndex = index;
+        currentState = attackStates[index];
+        currentState.Enter(fireOrigin);
     }
 
-    void NextPhase()
+    void NextState()
     {
-        currentPhase.Exit();
-        currentPhaseIndex = (currentPhaseIndex + 1) % phases.Count;
-        StartPhase(currentPhaseIndex);
+        currentState.Exit();
+        currentIndex = (currentIndex + 1) % attackStates.Count;
+        StartState(currentIndex);
     }
 }

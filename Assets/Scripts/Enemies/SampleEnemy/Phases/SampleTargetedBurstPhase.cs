@@ -1,25 +1,42 @@
 using UnityEngine;
 
-public class SampleTargetedBurstPhase : SampleAttackPhase
+[CreateAssetMenu(menuName = "Combat/Behaviors/Sample Targeted Burst")]
+public class SampleTargetedBurstBehavior : AttackBehavior
 {
-    private Transform player;
-    private float fireInterval;
-    private float fireTimer;
-    private int bulletsPerBurst;
-    private float bulletSpeed;
+    [Header("Burst Settings")]
+    public int bulletsPerBurst = 3;
+    public float fireInterval = 0.5f;
+    public float duration = 5f;
 
-    public SampleTargetedBurstPhase(Transform origin, Transform player, float duration, float fireInterval, int bulletsPerBurst, float bulletSpeed)
-        : base(origin, duration)
+    [Header("Bullet Settings")]
+    public float bulletSpeed = 10f;
+    public float bulletDamage = 12f;
+    public float bulletLifetime = 5f;
+    public float collisionRadius = 0.1f;
+    public bool canBeParried = true;
+    public bool destroyOnParry = true;
+    public GameObject bulletPrefab;
+
+    private Transform player;
+    private Transform origin;
+    private float timer;
+    private float fireTimer;
+
+    public override void Spawn(AttackData data, Transform origin)
     {
-        this.player = player;
-        this.fireInterval = fireInterval;
-        this.bulletsPerBurst = bulletsPerBurst;
-        this.bulletSpeed = bulletSpeed;
+        this.origin = origin;
+        player = GameObject.FindWithTag("Player")?.transform;
+
+        timer = 0f;
+        fireTimer = 0f;
+        IsFinished = false;
     }
 
-    public override void UpdatePhase(float dt)
+    public override void UpdateBehavior(AttackData data, float dt)
     {
-        base.UpdatePhase(dt);
+        if (IsFinished || player == null) return;
+
+        timer += dt;
         fireTimer += dt;
 
         if (fireTimer >= fireInterval)
@@ -27,16 +44,21 @@ public class SampleTargetedBurstPhase : SampleAttackPhase
             fireTimer = 0f;
             FireBurst();
         }
+
+        if (timer >= duration)
+            IsFinished = true;
     }
 
-    void FireBurst()
+    public override void End(AttackData data) { }
+
+    private void FireBurst()
     {
         Vector3 direction = (player.position - origin.position).normalized;
         float spread = 10f;
 
         for (int i = 0; i < bulletsPerBurst; i++)
         {
-            float angleOffset = Mathf.Lerp(-spread, spread, i / (float)(bulletsPerBurst - 1));
+            float angleOffset = Mathf.Lerp(-spread, spread, bulletsPerBurst == 1 ? 0.5f : i / (float)(bulletsPerBurst - 1));
             Vector3 dir = Quaternion.Euler(0, angleOffset, 0) * direction;
 
             Bullet b = new Bullet
@@ -44,12 +66,14 @@ public class SampleTargetedBurstPhase : SampleAttackPhase
                 position = origin.position,
                 direction = dir.normalized,
                 speed = bulletSpeed,
-                damage = 12f,
-                maxLifetime = 5f,
-                movementType = 0,
-                canBeParried = true,
-                parryAngle = 45f,
-                collisionRadius = 0.1f
+                damage = bulletDamage,
+                maxLifetime = bulletLifetime,
+                collisionRadius = collisionRadius,
+                canBeParried = canBeParried,
+                destroyOnParry = destroyOnParry,
+                movementType = BulletMovementType.Straight,
+                attackData = null, // optional if no reference needed
+                visual = bulletPrefab
             };
 
             BulletManager.Instance.SpawnBullet(b);

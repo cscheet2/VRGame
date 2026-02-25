@@ -1,20 +1,41 @@
 using UnityEngine;
 
-public class SampleSpiralPhase : SampleAttackPhase
+[CreateAssetMenu(menuName = "Combat/Behaviors/Sample Spiral Burst")]
+public class SampleSpiralBehavior : AttackBehavior
 {
-    private float fireRate;
+    [Header("Spiral Settings")]
+    public float fireRate = 0.1f;
+    public float duration = 5f;
+    public float angleStep = 15f;
+
+    [Header("Bullet Settings")]
+    public float bulletSpeed = 8f;
+    public float bulletDamage = 8f;
+    public float bulletLifetime = 8f;
+    public float collisionRadius = 0.1f;
+    public bool canBeParried = true;
+    public bool destroyOnParry = true;
+    public GameObject bulletPrefab;
+
+    private Transform origin;
+    private float timer;
     private float fireTimer;
     private float currentAngle;
 
-    public SampleSpiralPhase(Transform origin, float duration, float fireRate)
-        : base(origin, duration)
+    public override void Spawn(AttackData data, Transform origin)
     {
-        this.fireRate = fireRate;
+        this.origin = origin;
+        timer = 0f;
+        fireTimer = 0f;
+        currentAngle = 0f;
+        IsFinished = false;
     }
 
-    public override void UpdatePhase(float dt)
+    public override void UpdateBehavior(AttackData data, float dt)
     {
-        base.UpdatePhase(dt);
+        if (IsFinished) return;
+
+        timer += dt;
         fireTimer += dt;
 
         if (fireTimer >= fireRate)
@@ -22,24 +43,31 @@ public class SampleSpiralPhase : SampleAttackPhase
             fireTimer = 0f;
             FireSpiral();
         }
+
+        if (timer >= duration)
+            IsFinished = true;
     }
 
-    void FireSpiral()
+    public override void End(AttackData data) { }
+
+    private void FireSpiral()
     {
-        currentAngle += 15f;
+        currentAngle += angleStep;
         Vector3 dir = Quaternion.Euler(0f, currentAngle, 0f) * origin.forward;
 
         Bullet b = new Bullet
         {
             position = origin.position,
             direction = dir.normalized,
-            speed = 8f,
-            damage = 8f,
-            maxLifetime = 8f,
-            movementType = 0,
-            canBeParried = true,
-            parryAngle = 30f,
-            collisionRadius = 0.1f
+            speed = bulletSpeed,
+            damage = bulletDamage,
+            maxLifetime = bulletLifetime,
+            collisionRadius = collisionRadius,
+            canBeParried = canBeParried,
+            destroyOnParry = destroyOnParry,
+            movementType = BulletMovementType.Straight,
+            attackData = null,
+            visual = bulletPrefab
         };
 
         BulletManager.Instance.SpawnBullet(b);

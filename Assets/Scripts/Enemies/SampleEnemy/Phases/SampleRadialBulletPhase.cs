@@ -1,23 +1,39 @@
 using UnityEngine;
 
-public class SampleRadialBulletPhase : SampleAttackPhase
+[CreateAssetMenu(menuName = "Combat/Behaviors/Sample Radial Burst")]
+public class SampleRadialBulletBehavior : AttackBehavior
 {
-    private float fireInterval;
-    private float fireTimer;
-    private int bulletCount;
-    private float bulletSpeed;
+    [Header("Radial Settings")]
+    public int bulletCount = 8;
+    public float fireInterval = 1f;
+    public float duration = 5f;
 
-    public SampleRadialBulletPhase(Transform origin, float duration, float fireInterval, int bulletCount, float bulletSpeed)
-        : base(origin, duration)
+    [Header("Bullet Settings")]
+    public float bulletSpeed = 8f;
+    public float bulletDamage = 10f;
+    public float bulletLifetime = 6f;
+    public float collisionRadius = 0.1f;
+    public bool canBeParried = true;
+    public bool destroyOnParry = true;
+    public GameObject bulletPrefab;
+
+    private Transform origin;
+    private float timer;
+    private float fireTimer;
+
+    public override void Spawn(AttackData data, Transform origin)
     {
-        this.fireInterval = fireInterval;
-        this.bulletCount = bulletCount;
-        this.bulletSpeed = bulletSpeed;
+        this.origin = origin;
+        timer = 0f;
+        fireTimer = 0f;
+        IsFinished = false;
     }
 
-    public override void UpdatePhase(float dt)
+    public override void UpdateBehavior(AttackData data, float dt)
     {
-        base.UpdatePhase(dt);
+        if (IsFinished) return;
+
+        timer += dt;
         fireTimer += dt;
 
         if (fireTimer >= fireInterval)
@@ -25,9 +41,14 @@ public class SampleRadialBulletPhase : SampleAttackPhase
             fireTimer = 0f;
             FireRadial();
         }
+
+        if (timer >= duration)
+            IsFinished = true;
     }
 
-    void FireRadial()
+    public override void End(AttackData data) { }
+
+    private void FireRadial()
     {
         float angleStep = 360f / bulletCount;
 
@@ -41,12 +62,14 @@ public class SampleRadialBulletPhase : SampleAttackPhase
                 position = origin.position,
                 direction = dir.normalized,
                 speed = bulletSpeed,
-                damage = 10f,
-                maxLifetime = 6f,
-                movementType = 0,
-                canBeParried = true,
-                parryAngle = 45f,
-                collisionRadius = 0.1f
+                damage = bulletDamage,
+                maxLifetime = bulletLifetime,
+                collisionRadius = collisionRadius,
+                canBeParried = canBeParried,
+                destroyOnParry = destroyOnParry,
+                movementType = BulletMovementType.Straight,
+                attackData = null,
+                visual = bulletPrefab
             };
 
             BulletManager.Instance.SpawnBullet(b);

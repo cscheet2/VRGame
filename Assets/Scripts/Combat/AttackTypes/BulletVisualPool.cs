@@ -5,10 +5,11 @@ public class BulletVisualPool : MonoBehaviour
 {
     public static BulletVisualPool Instance { get; private set; }
 
-    public GameObject bulletPrefab;
-    public int poolSize = 200;
+    [SerializeField] private int defaultPrewarmCount = 32;
 
-    private Queue<GameObject> pool = new Queue<GameObject>();
+    // One pool per prefab
+    private readonly Dictionary<GameObject, Queue<GameObject>> pools =
+        new Dictionary<GameObject, Queue<GameObject>>();
 
     void Awake()
     {
@@ -17,31 +18,88 @@ public class BulletVisualPool : MonoBehaviour
             Destroy(gameObject);
             return;
         }
-        Instance = this;
 
-        for (int i = 0; i < poolSize; i++)
-        {
-            GameObject obj = Instantiate(bulletPrefab, transform);
-            obj.SetActive(false);
-            pool.Enqueue(obj);
-        }
+        Instance = this;
     }
 
-    public GameObject Spawn(Vector3 position, Vector3 direction)
+    // ===============================
+    // SPAWN
+    // ===============================
+
+    public GameObject Spawn(
+        GameObject prefab,
+        Vector3 position,
+        Vector3 direction)
     {
-        if (pool.Count == 0)
+        if (prefab == null)
+        {
+            Debug.LogWarning("Trying to spawn null prefab.");
             return null;
+        }
+
+        if (!pools.TryGetValue(prefab, out var pool))
+        {
+            pool = CreatePool(prefab);
+        }
+
+        if (pool.Count == 0)
+        {
+            // Expand pool dynamically
+            Prewarm(prefab, pool, 1);
+        }
 
         GameObject obj = pool.Dequeue();
+
         obj.transform.position = position;
         obj.transform.forward = direction;
         obj.SetActive(true);
+
         return obj;
     }
 
-    public void Despawn(GameObject obj)
+    // ===============================
+    // DESPAWN
+    // ===============================
+
+    public void Despawn(GameObject obj, GameObject prefab)
     {
+        if (obj == null || prefab == null)
+            return;
+
         obj.SetActive(false);
+
+        if (!pools.TryGetValue(prefab, out var pool))
+        {
+            pool = CreatePool(prefab);
+        }
+
         pool.Enqueue(obj);
+    }
+
+    // ===============================
+    // INTERNAL
+    // ===============================
+
+    private Queue<GameObject> CreatePool(GameObject prefab)
+    {
+        var pool = new Queue<GameObject>();
+        pools[prefab] = pool;
+
+        Prewarm(prefab, pool, defaultPrewarmCount);
+
+        return pool;
+    }
+
+    private void Prewarm(
+        GameObject prefab,
+        Queue<GameObject> pool,
+        int count)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            GameObject obj = Instantiate(prefab, transform);
+            obj.SetActive(false);
+            pool.Enqueue(obj);
+        }
     }
 }

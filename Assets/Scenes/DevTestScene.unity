@@ -470,7 +470,7 @@ Transform:
   m_GameObject: {fileID: 393396195}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: -0.082, z: 0.875}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -570,7 +570,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f4b0e30be4f920d478a7880d4a61e9b8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  col: {fileID: 0}
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
@@ -844,6 +843,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   fireOrigin: {fileID: 1707380144}
   player: {fileID: 211145276}
+  radialAttackData: {fileID: 0}
+  spiralAttackData: {fileID: 0}
+  targetedAttackData: {fileID: 0}
 --- !u!54 &809586725
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -914,7 +916,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 1285423404}
+    m_TransformParent: {fileID: 1534037563}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 26317383b8bbd254cb668812e676670b, type: 3}
       propertyPath: m_LocalScale.x
@@ -934,7 +936,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 26317383b8bbd254cb668812e676670b, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.05
+      value: -0.049999952
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 26317383b8bbd254cb668812e676670b, type: 3}
       propertyPath: m_LocalPosition.z
@@ -1012,7 +1014,6 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1534037563}
-  - {fileID: 1198759818}
   m_Father: {fileID: 2004430510}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1534037562
@@ -1046,6 +1047,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 1198759818}
   - {fileID: 393396196}
   - {fileID: 1971910505}
   m_Father: {fileID: 1285423404}
@@ -1086,6 +1088,8 @@ MonoBehaviour:
   swingStartThreshold: 1.5
   swingStopThreshold: 0.4
   perfectWindow: 0.15
+  parryAngle: 70
+  speedMultiplier: 1.5
   hitStopDuration: 0.05
   hitStopScale: 0.85
 --- !u!1 &1707380143
@@ -1130,8 +1134,9 @@ GameObject:
   - component: {fileID: 1756551189}
   - component: {fileID: 1756551188}
   - component: {fileID: 1756551187}
+  - component: {fileID: 1756551190}
   m_Layer: 0
-  m_Name: BulletManager
+  m_Name: Managers
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1149,8 +1154,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c5e38a1b83c7bcf4ea37b86654ef502b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  bulletPrefab: {fileID: 6468840496453059953, guid: c834f54566980544aa2d6c1dfc5c076c, type: 3}
-  poolSize: 200
+  defaultPrewarmCount: 32
 --- !u!114 &1756551188
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1163,6 +1167,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d2a613a9418ee264695e1b7db4a5a1fe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  cellSize: 2
 --- !u!4 &1756551189
 Transform:
   m_ObjectHideFlags: 0
@@ -1178,6 +1183,18 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1756551190
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1756551186}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 34ff86f67ca7a2a44ab50a4a12134c5a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1961115205
 GameObject:
   m_ObjectHideFlags: 0
@@ -1253,6 +1270,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   fireOrigin: {fileID: 1707380144}
   player: {fileID: 211145276}
+  radialAttackData: {fileID: 0}
+  spiralAttackData: {fileID: 0}
+  targetedAttackData: {fileID: 0}
 --- !u!1 &1971910504
 GameObject:
   m_ObjectHideFlags: 0
@@ -1278,7 +1298,7 @@ Transform:
   m_GameObject: {fileID: 1971910504}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0.19}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
