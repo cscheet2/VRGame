@@ -21,6 +21,9 @@ public class AttackData : ScriptableObject
     [Header("Behavior")]
     public AttackBehavior behaviorPrefab; // ScriptableObject asset implementing AttackBehavior
 
+    [Header("Identification")]
+    public string attackID;
+
     // Runtime instance (not stored in the asset)
     [HideInInspector] public AttackBehavior behaviorInstance;
 

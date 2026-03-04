@@ -841,11 +841,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 87e18b480585fc640ae4d1090f01e36e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  fireOrigin: {fileID: 1707380144}
+  maxHealth: 100
   player: {fileID: 211145276}
-  radialAttackData: {fileID: 0}
-  spiralAttackData: {fileID: 0}
-  targetedAttackData: {fileID: 0}
+  fireOrigin: {fileID: 1707380144}
+  phases:
+  - {fileID: 0}
+  currentPhase: {fileID: 0}
+  animator: {fileID: 0}
+  facePlayer: 1
+  rotateSpeed: 5
 --- !u!54 &809586725
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -1268,11 +1272,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 87e18b480585fc640ae4d1090f01e36e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  fireOrigin: {fileID: 1707380144}
+  maxHealth: 100
   player: {fileID: 211145276}
-  radialAttackData: {fileID: 0}
-  spiralAttackData: {fileID: 0}
-  targetedAttackData: {fileID: 0}
+  fireOrigin: {fileID: 1707380144}
+  phases: []
+  currentPhase: {fileID: 0}
+  animator: {fileID: 0}
+  facePlayer: 1
+  rotateSpeed: 5
 --- !u!1 &1971910504
 GameObject:
   m_ObjectHideFlags: 0

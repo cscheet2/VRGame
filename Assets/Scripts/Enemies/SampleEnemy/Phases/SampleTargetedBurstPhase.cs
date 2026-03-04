@@ -1,30 +1,32 @@
 using UnityEngine;
 
-[CreateAssetMenu(menuName = "Combat/Behaviors/Sample Targeted Burst")]
+[CreateAssetMenu(menuName = "Combat/Behaviors/Targeted Burst")]
 public class SampleTargetedBurstBehavior : AttackBehavior
 {
     [Header("Burst Settings")]
     public int bulletsPerBurst = 3;
     public float fireInterval = 0.5f;
     public float duration = 5f;
+    public float spreadAngle = 10f;
 
     [Header("Bullet Settings")]
-    public float bulletSpeed = 10f;
-    public float bulletDamage = 12f;
-    public float bulletLifetime = 5f;
     public float collisionRadius = 0.1f;
     public bool canBeParried = true;
     public bool destroyOnParry = true;
-    public GameObject bulletPrefab;
 
-    private Transform player;
     private Transform origin;
+    private Transform player;
+    private AttackData data;
+
     private float timer;
     private float fireTimer;
 
     public override void Spawn(AttackData data, Transform origin)
     {
         this.origin = origin;
+        this.data = data;
+
+        // Get player once from scene
         player = GameObject.FindWithTag("Player")?.transform;
 
         timer = 0f;
@@ -34,7 +36,8 @@ public class SampleTargetedBurstBehavior : AttackBehavior
 
     public override void UpdateBehavior(AttackData data, float dt)
     {
-        if (IsFinished || player == null) return;
+        if (IsFinished || player == null)
+            return;
 
         timer += dt;
         fireTimer += dt;
@@ -49,31 +52,40 @@ public class SampleTargetedBurstBehavior : AttackBehavior
             IsFinished = true;
     }
 
-    public override void End(AttackData data) { }
+    public override void End(AttackData data)
+    {
+        // Nothing special needed here
+    }
 
     private void FireBurst()
     {
-        Vector3 direction = (player.position - origin.position).normalized;
-        float spread = 10f;
+        Vector3 baseDirection = (player.position - origin.position).normalized;
 
         for (int i = 0; i < bulletsPerBurst; i++)
         {
-            float angleOffset = Mathf.Lerp(-spread, spread, bulletsPerBurst == 1 ? 0.5f : i / (float)(bulletsPerBurst - 1));
-            Vector3 dir = Quaternion.Euler(0, angleOffset, 0) * direction;
+            float t = bulletsPerBurst == 1 ? 0.5f : i / (float)(bulletsPerBurst - 1);
+            float angleOffset = Mathf.Lerp(-spreadAngle, spreadAngle, t);
+
+            Vector3 dir = Quaternion.Euler(0f, angleOffset, 0f) * baseDirection;
 
             Bullet b = new Bullet
             {
                 position = origin.position,
                 direction = dir.normalized,
-                speed = bulletSpeed,
-                damage = bulletDamage,
-                maxLifetime = bulletLifetime,
+
+                // ? Use AttackData stats
+                speed = data.speed,
+                damage = data.damage,
+                maxLifetime = data.maxLifetime,
+
                 collisionRadius = collisionRadius,
                 canBeParried = canBeParried,
                 destroyOnParry = destroyOnParry,
+
                 movementType = BulletMovementType.Straight,
-                attackData = null, // optional if no reference needed
-                visual = bulletPrefab
+
+                attackData = data,
+                visual = data.visualPrefab
             };
 
             BulletManager.Instance.SpawnBullet(b);

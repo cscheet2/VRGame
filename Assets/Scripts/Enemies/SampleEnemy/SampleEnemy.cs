@@ -1,84 +1,41 @@
-using System.Collections.Generic;
 using UnityEngine;
 
-public class SampleEnemy : MonoBehaviour
+public class SampleEnemy : BaseEnemy
 {
-    [Header("References")]
-    public Transform fireOrigin;
-    public Transform player; // optional, only needed for targeted attacks
+    [Header("Rotation")]
+    public bool facePlayer = true;
+    public float rotateSpeed = 5f;
 
-    [Header("AttackData Assets")]
-    public AttackData radialAttackData;
-    public AttackData spiralAttackData;
-    public AttackData targetedAttackData;
-
-    private List<AttackState> attackStates = new List<AttackState>();
-    private int currentIndex = 0;
-    private AttackState currentState;
-
-    void Start()
+    protected override void Update()
     {
-        SetupAttackStates();
-        StartState(0);
+        base.Update();
+        HandleRotation();
     }
 
-    void Update()
+    void HandleRotation()
     {
-        if (currentState == null) return;
+        if (!facePlayer || player == null) return;
 
-        currentState.Tick(Time.deltaTime);
+        Vector3 dir = player.position - transform.position;
+        dir.y = 0f;
 
-        // Move to next state if finished
-        if (currentState.attack.behaviorInstance != null && currentState.attack.behaviorInstance.IsFinished)
-        {
-            NextState();
-        }
+        if (dir.sqrMagnitude < 0.01f) return;
+
+        Quaternion targetRot = Quaternion.LookRotation(dir);
+        transform.rotation = Quaternion.Slerp(
+            transform.rotation,
+            targetRot,
+            rotateSpeed * Time.deltaTime
+        );
     }
 
-    void SetupAttackStates()
+    protected override void Die()
     {
-        attackStates.Clear();
+        Debug.Log("Enemy Died");
 
-        // Radial attack
-        if (radialAttackData != null)
-        {
-            radialAttackData.InitializeBehavior();
-            attackStates.Add(new AttackState { attack = radialAttackData });
-        }
+        if (animator != null)
+            animator.SetTrigger("Die");
 
-        // Spiral attack
-        if (spiralAttackData != null)
-        {
-            spiralAttackData.InitializeBehavior();
-            attackStates.Add(new AttackState { attack = spiralAttackData });
-        }
-
-        // Targeted attack
-        if (targetedAttackData != null)
-        {
-            targetedAttackData.InitializeBehavior();
-
-            // Assign player as target if the behavior supports it
-            if (targetedAttackData.behaviorInstance is IAttackTarget targetable)
-            {
-                targetable.SetTarget(player);
-            }
-
-            attackStates.Add(new AttackState { attack = targetedAttackData });
-        }
-    }
-
-    void StartState(int index)
-    {
-        currentIndex = index;
-        currentState = attackStates[index];
-        currentState.Enter(fireOrigin);
-    }
-
-    void NextState()
-    {
-        currentState.Exit();
-        currentIndex = (currentIndex + 1) % attackStates.Count;
-        StartState(currentIndex);
+        base.Die();
     }
 }
