@@ -14,13 +14,10 @@ public class Boss1AttackState : Boss1BaseState
 
     }
 
-    public override void ExitState(Boss1StateManager state)
+    public override float OnBossHurt(Boss1StateManager state)
     {
-    
+        return 0;
     }
 
-    public override void OnBossHurt(Boss1StateManager state)
-    {
-    
-    }
+
 }
