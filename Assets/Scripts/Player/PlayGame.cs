@@ -1,20 +1,17 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class PlayGame : MonoBehaviour
 {
-    //Load Scene
-    public void Play()
+    public void StartGame()
     {
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
+        SceneManager.LoadScene(1);
+        Debug.Log("Button clicked :O");
     }
 
-    //Quit Game
-    public void Quit()
+    public void QuitGame()
     {
         Application.Quit();
-        Debug.Log("Player Said I quit");
+        Debug.Log("Goodbye forever.");
     }
 }
