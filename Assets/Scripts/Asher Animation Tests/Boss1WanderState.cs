@@ -2,16 +2,16 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Boss1WanderState : Boss1BaseState
+public class Boss1WanderState : EnemyBaseState
 {
     private float wanderSpeed = 1;
     //How to get this wanderSpeed parameter in the unity editor?
-    public override void EnterState(Boss1StateManager state)
+    public override void EnterState(EnemyStateManager state)
     {
 
     }
 
-    public override void UpdateState(Boss1StateManager state)
+    public override void UpdateState(EnemyStateManager state)
     {
         //example movement code for a state
         state.transform.Translate(Vector3.forward * this.wanderSpeed * Time.deltaTime);
@@ -26,7 +26,7 @@ public class Boss1WanderState : Boss1BaseState
         */
     }
 
-    public override float OnBossHurt(Boss1StateManager state)
+    public override float OnBossHurt(EnemyStateManager state)
     {
         return 0;
     }
