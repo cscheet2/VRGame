@@ -114,17 +114,20 @@ public abstract class BaseEnemy : MonoBehaviour
 
     public void SwitchPhase(EnemyPhase newPhase)
     {
-        currentPhase = newPhase;
+        currentPhase?.OnPhaseExit(this);
 
-        // Reset current attack
         currentAttack?.Exit();
         currentAttack = null;
+
+        currentPhase = newPhase;
 
         RegisterAttacks(newPhase.attacks);
 
         if (newPhase.rootNode != null)
             currentTree = newPhase.rootNode.CreateNode(this);
 
-        Debug.Log($"{name} switched to phase at {newPhase.enterAtHealthPercent * 100}% HP");
+        currentPhase.OnPhaseEnter(this);
+
+        Debug.Log($"{name} switched phase.");
     }
 }

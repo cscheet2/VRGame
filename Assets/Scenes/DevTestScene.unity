@@ -850,6 +850,17 @@ MonoBehaviour:
   animator: {fileID: 0}
   facePlayer: 1
   rotateSpeed: 5
+  enableShooting: 1
+  fireInterval: 1
+  bulletsPerShot: 3
+  spreadAngle: 10
+  bulletPrefab: {fileID: 0}
+  bulletSpeed: 10
+  bulletDamage: 10
+  bulletLifetime: 5
+  collisionRadius: 0.1
+  canBeParried: 1
+  destroyOnParry: 1
 --- !u!54 &809586725
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -1275,11 +1286,23 @@ MonoBehaviour:
   maxHealth: 100
   player: {fileID: 211145276}
   fireOrigin: {fileID: 1707380144}
-  phases: []
+  phases:
+  - {fileID: 0}
   currentPhase: {fileID: 0}
   animator: {fileID: 0}
   facePlayer: 1
   rotateSpeed: 5
+  enableShooting: 1
+  fireInterval: 1
+  bulletsPerShot: 3
+  spreadAngle: 10
+  bulletPrefab: {fileID: 0}
+  bulletSpeed: 10
+  bulletDamage: 10
+  bulletLifetime: 5
+  collisionRadius: 0.1
+  canBeParried: 1
+  destroyOnParry: 1
 --- !u!1 &1971910504
 GameObject:
   m_ObjectHideFlags: 0
