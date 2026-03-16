@@ -27,6 +27,7 @@ public class VeryBasicAnimator : MonoBehaviour
         transform.Rotate(0, turnSpeed * Time.deltaTime, 0);
         transform.Translate(Vector3.forward * speed * Time.deltaTime);
         turnSpeed += (Random.value - 0.5f) * turnSpeedFactor;
+        transform.position = new Vector3(transform.position.x, Mathf.Clamp(transform.position.y, 0, Mathf.Infinity), transform.position.z);
     }
 
     IEnumerator ChangeState(EnState state)
