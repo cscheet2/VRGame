@@ -4,6 +4,7 @@ public class Boss1StateManager : EnemyStateManager
 {
     private Boss1GroundSlamShockwaveAttack shockwaveState = new Boss1GroundSlamShockwaveAttack();
     private Boss1MapSeparatorAttack mapSeperatorState = new Boss1MapSeparatorAttack();
+    private Boss1RepeatedGroundSlamBulletAttack repeatedGroundSlamAttack = new Boss1RepeatedGroundSlamBulletAttack();
 
     public override void Start()
     {
@@ -14,7 +15,7 @@ public class Boss1StateManager : EnemyStateManager
 
         ObstacleManager.Instance.PrewarmObstaclePools(obstacleData);
 
-        currentState = mapSeperatorState;
+        currentState = repeatedGroundSlamAttack;
         currentState.EnterState(this);
     }
 

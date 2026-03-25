@@ -25,6 +25,7 @@ public struct Bullet
     public bool destroyOnParry;
     public bool pendingDestroy;
     public BulletMovementType movementType;
+    public Vector3 velocity;
 
     // ===============================
     // References

@@ -2,5 +2,6 @@ public enum BulletMovementType
 {
     Straight,
     Sine,
-    Spiral
+    Spiral,
+    Arc,
 }

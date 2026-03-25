@@ -6,6 +6,7 @@ public abstract class EnemyStateManager : MonoBehaviour
     public Animator animator;
     public Transform player;
     public BossObstacleData obstacleData;
+    public BossBulletData bulletData;
 
     public virtual void Start()
     {

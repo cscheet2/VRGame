@@ -40,6 +40,24 @@ public static class BulletMovement
 
                     break;
                 }
+            case BulletMovementType.Arc:
+                {
+                    float gravity = 18f;
+                
+                    // First frame — initialize velocity from direction * speed
+                    if (bullet.velocity == Vector3.zero)
+                        bullet.velocity = bullet.direction * bullet.speed;
+                
+                    // Apply gravity each frame
+                    bullet.velocity  += Vector3.down * gravity * dt;
+                    bullet.position  += bullet.velocity * dt;
+                
+                    // Keep direction in sync so visuals face the right way
+                    if (bullet.velocity.sqrMagnitude > 0.001f)
+                        bullet.direction = bullet.velocity.normalized;
+                
+                    break;
+                }
         }
     }
 
