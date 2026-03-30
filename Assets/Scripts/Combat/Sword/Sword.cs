@@ -1,3 +1,4 @@
+// Add this at the top
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
@@ -12,6 +13,7 @@ public class Sword : MonoBehaviour
     public float sphereRadius = 0.025f;
     public LayerMask meleeParryLayer;
     public float hitCooldown = 0.2f;
+    public float damageAmount = 10f; // <-- Damage to boss
 
     [Header("Swing")]
     public float swingStartThreshold = 1.5f;
@@ -43,7 +45,6 @@ public class Sword : MonoBehaviour
 
     void Awake()
     {
-        // Try to find any MeshRenderer in children (recursive)
         swordRenderer = GetComponentInChildren<Renderer>(true);
 
         if (swordRenderer == null)
@@ -98,11 +99,10 @@ public class Sword : MonoBehaviour
     // =========================================================
     // MELEE (Physics-Based)
     // =========================================================
-
     void SweepBladeMelee()
     {
         if (bladeBase == null || bladeTip == null) return;
-
+        
         for (int i = 0; i <= 4; i++)
         {
             float t = i / 4f;
@@ -131,6 +131,16 @@ public class Sword : MonoBehaviour
 
                 cooldowns[rb] = Time.time;
 
+                // =================================================
+                // Damage Boss if hit
+                // =================================================
+                Boss1StateManager boss = hit.collider.GetComponent<Boss1StateManager>();
+                if (boss != null)
+                {
+                    boss.TakeDamage(damageAmount);
+                }
+
+                // Optional: reflect rigidbody for physics-based hits
                 Vector3 reflectDir = Vector3.Reflect(rb.velocity, hit.normal);
                 rb.velocity = reflectDir;
 
@@ -152,7 +162,6 @@ public class Sword : MonoBehaviour
     // =========================================================
     // BULLETS (Optimized Spatial Grid + OBB)
     // =========================================================
-
     void ParryBullets()
     {
         if (BulletManager.Instance == null) return;
@@ -177,7 +186,6 @@ public class Sword : MonoBehaviour
     // =========================================================
     // HIT STOP
     // =========================================================
-
     IEnumerator HitStop()
     {
         float original = Time.timeScale;

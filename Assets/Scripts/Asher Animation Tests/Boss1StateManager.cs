@@ -82,6 +82,9 @@ public class Boss1StateManager : EnemyStateManager
         if (bossHealthBar != null)
             bossHealthBar.UpdateHealthPercentage(health, maxHealth);
 
+        if(HUDManager.Instance != null)
+            HUDManager.Instance.ShowBossBar(true);
+
         if (player == null)
             player = GameObject.FindWithTag("Player").transform;
 
@@ -95,15 +98,29 @@ public class Boss1StateManager : EnemyStateManager
         currentState.UpdateState(this);
     }
 
-    override protected void OnCollisionEnter(Collision collision)
-    {
-        BossHurt();
-    }
+    // override protected void OnCollisionEnter(Collision collision)
+    // {
+    //     BossHurt();
+    // }
 
-    public override void BossHurt()
+    // public override void BossHurt()
+    // {
+    //     float damage = currentState.OnBossHurt(this);
+    //     health = Mathf.Max(0f, health - damage);
+    //     if (bossHealthBar != null) bossHealthBar.UpdateHealthPercentage(health, maxHealth);
+    // }
+
+    public void TakeDamage(float amount)
     {
-        float damage = currentState.OnBossHurt(this);
-        health = Mathf.Max(0f, health - damage);
+        health = Mathf.Max(0f, health - amount);
+        if (bossHealthBar != null)
+            bossHealthBar.UpdateHealthPercentage(health, maxHealth);
+
+        if (health <= 0f)
+        {
+            Debug.Log("Boss defeated!");
+            // Add any death logic here
+        }
     }
 
     // ===============================
