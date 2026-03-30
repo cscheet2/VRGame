@@ -9,26 +9,37 @@ public class Boss1GroundSlamShockwaveAttack : EnemyBaseState
 {
     private float activeTime    = 10f;
     private float mapRadius     = 30f;
-    private float ringThickness = 0.5f;  // Thinner ring so gaps are visible
-    private float ringWidth     = 3f;    // Narrow dangerous band
-    private int   ringCount     = 3;     // Multiple rings spawned at different times
-    private float ringDelay     = 1.5f;  // Time between each ring spawning
+    private float ringThickness = 0.5f;
+    private float ringWidth     = 3f;
+    private int   ringCount     = 3;
+    private float ringDelay     = 1.5f;
 
     private float spawnTimer    = 0f;
     private int   ringsSpawned  = 0;
+    private bool  attackDone    = false;
+
+    // Total duration before transitioning — all rings spawned plus time for last ring to expand
+    private float totalDuration  => ringDelay * ringCount + activeTime;
+    private float totalTimer     = 0f;
 
     public override void EnterState(EnemyStateManager state)
     {
-        spawnTimer   = 0f;
+        spawnTimer  = 0f;
+        totalTimer  = 0f;
         ringsSpawned = 0;
+        attackDone  = false;
 
-        // Spawn first ring immediately
         SpawnShockwave(state, ringsSpawned);
         ringsSpawned++;
     }
 
     public override void UpdateState(EnemyStateManager state)
     {
+        if (attackDone)
+            return;
+
+        totalTimer += Time.deltaTime;
+
         // Spawn remaining rings with a delay between each
         if (ringsSpawned < ringCount)
         {
@@ -40,6 +51,14 @@ public class Boss1GroundSlamShockwaveAttack : EnemyBaseState
                 SpawnShockwave(state, ringsSpawned);
                 ringsSpawned++;
             }
+        }
+
+        // Wait for all rings to finish expanding before transitioning
+        if (totalTimer >= totalDuration)
+        {
+            attackDone = true;
+            Boss1StateManager boss = (Boss1StateManager)state;
+            boss.TransitionToNextState();
         }
     }
 
@@ -53,7 +72,6 @@ public class Boss1GroundSlamShockwaveAttack : EnemyBaseState
         Vector3 spawnPos = state.transform.position;
         spawnPos.y       = 0f;
 
-        // Each ring starts slightly further out so they don't overlap at spawn
         float startRadius = ringIndex * ringWidth * 1.5f;
 
         Obstacle o = new Obstacle
@@ -73,8 +91,8 @@ public class Boss1GroundSlamShockwaveAttack : EnemyBaseState
             movementType    = ObstacleMovementType.Stationary,
 
             scalesOverTime  = true,
-            initialScale    = new Vector3(startRadius * 2f,  ringThickness, startRadius * 2f),
-            finalScale      = new Vector3(mapRadius * 2f,    ringThickness, mapRadius * 2f),
+            initialScale    = new Vector3(startRadius * 2f, ringThickness, startRadius * 2f),
+            finalScale      = new Vector3(mapRadius * 2f,   ringThickness, mapRadius * 2f),
 
             visualPrefab    = state.obstacleData.shockwavePrefab,
         };

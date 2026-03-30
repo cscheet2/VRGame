@@ -7,10 +7,10 @@ using UnityEngine;
 
 public class Boss1RepeatedGroundSlamBulletAttack : EnemyBaseState
 {
-    private int   slamCount        = 3;
-    private float timeBetweenSlams = 1.5f;
+    private int   slamCount        = 4;
+    private float timeBetweenSlams = 1.0f;
 
-    private int   bulletsPerSlam   = 30;
+    private int   bulletsPerSlam   = 100;
     private float bulletDamage     = 10f;
     private float landingRadius    = 5f;   // How far from player bullets can land
     private float landingRadiusMin = 1f;   // Minimum distance from player so they aren't instant hits
@@ -32,7 +32,12 @@ public class Boss1RepeatedGroundSlamBulletAttack : EnemyBaseState
     public override void UpdateState(EnemyStateManager state)
     {
         if (slamsCompleted >= slamCount)
+        {
+            // All slams done — jump at the player
+                Boss1StateManager boss = (Boss1StateManager)state;
+                boss.TransitionToNextState();
             return;
+        }
 
         if (waitingForNext)
         {

@@ -2,22 +2,30 @@ using UnityEngine;
 
 public class PlayerHealth : MonoBehaviour
 {
-    public static PlayerHealth Instance;
+    public float maxHealth = 100f;
+    public float currentHealth { get; private set; }
 
-    public float health = 100f;
-
-    private void Awake()
+    void Awake()
     {
-        Instance = this;
+        currentHealth = maxHealth;
     }
 
     public void TakeDamage(float amount)
     {
-        health -= amount;
+        currentHealth = Mathf.Max(0f, currentHealth - amount);
 
-        if (health <= 0f)
-        {
-            Debug.Log("Player Dead");
-        }
+        if (currentHealth <= 0f)
+            OnDeath();
+    }
+
+    public void Heal(float amount)
+    {
+        currentHealth = Mathf.Min(maxHealth, currentHealth + amount);
+    }
+
+    private void OnDeath()
+    {
+        Debug.Log("Player died");
+        // Hook your death logic here
     }
 }

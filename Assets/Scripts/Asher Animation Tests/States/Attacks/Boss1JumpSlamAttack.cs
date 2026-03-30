@@ -1,42 +1,47 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class Boss1JumpSlamAttack : EnemyBaseState
 {
     private Vector3 startPosition;
     private Vector3 targetPosition;
+
     private float journeyTime = 1.2f;
+    private float jumpHeight  = 5f;
     private float elapsedTime = 0f;
-    private float jumpHeight = 5f;
-    public AnimationCurve jumpCurve; // Edit this in the Inspector
+    private bool  hasLanded   = false;
 
     public override void EnterState(EnemyStateManager state)
     {
         startPosition = state.transform.position;
-        targetPosition = state.player.position;
+
+        // Land slightly short of the player so boss and player don't overlap
+        Vector3 toPlayer = (state.player.position - state.transform.position).normalized;
+        targetPosition   = state.player.position - toPlayer * 2f;
+        targetPosition.y = 0f;
+
         elapsedTime = 0f;
+        hasLanded   = false;
     }
 
     public override void UpdateState(EnemyStateManager state)
     {
-        if (elapsedTime < journeyTime)
+        if (hasLanded)
+            return;
+
+        elapsedTime += Time.deltaTime;
+        float t = Mathf.Clamp01(elapsedTime / journeyTime);
+
+        Vector3 flatPosition  = Vector3.Lerp(startPosition, targetPosition, t);
+        flatPosition.y       += jumpHeight * 4 * t * (1 - t);
+        state.transform.position = flatPosition;
+
+        if (t >= 1f)
         {
-            elapsedTime += Time.deltaTime;
-            float t = Mathf.Clamp01(elapsedTime / journeyTime);
-
-            // Horizontal: move straight from start to target
-            Vector3 flatPosition = Vector3.Lerp(startPosition, targetPosition, t);
-
-            // Vertical: driven by the curve, so you can shape the arc freely
-            flatPosition.y += jumpCurve.Evaluate(t) * jumpHeight;
-
-            state.transform.position = flatPosition;
-        }
-        else
-        {
+            hasLanded = true;
             state.transform.position = targetPosition;
-            // state.SwitchState(state.Boss1TiredState);
+            // state.animator.SetTrigger("GroundSlam");
+            Boss1StateManager boss = (Boss1StateManager)state;
+            boss.TransitionToNextState();
         }
     }
 
